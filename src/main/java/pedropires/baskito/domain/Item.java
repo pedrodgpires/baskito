@@ -26,13 +26,15 @@ public class Item {
 
     private String description;
 
-    private double price;
+    private int quantity;
 
-    public Item(@NonNull UUID basketId, @NonNull String description, double price) {
+    private boolean checked;
 
+    public Item(@NonNull UUID basketId, @NonNull String description, int quantity) {
         this.basketId = basketId;
         this.description = description;
-        this.price = price;
+        this.quantity = quantity;
+        this.checked = false;
     }
     
 
