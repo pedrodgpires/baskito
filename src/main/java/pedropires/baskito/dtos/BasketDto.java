@@ -1,5 +1,6 @@
 package pedropires.baskito.dtos;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -15,7 +16,7 @@ public class BasketDto {
 
     private String description;
 
-    private double totalPrice;
+    private List<String> invitedEmails;
 
 
 }

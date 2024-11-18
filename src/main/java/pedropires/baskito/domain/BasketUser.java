@@ -2,6 +2,7 @@ package pedropires.baskito.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
@@ -18,8 +19,14 @@ import java.util.UUID;
 @NoArgsConstructor
 public class BasketUser {
 
+    public BasketUser(UUID basketId, UUID userId) {
+        this.basketId = basketId;
+        this.userId = userId;
+    }
+
     @Id
-    private String basketUserId;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private UUID basketUserId;
 
     private UUID basketId;
 

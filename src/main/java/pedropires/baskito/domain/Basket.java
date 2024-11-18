@@ -25,22 +25,15 @@ public class Basket {
 
     private String description;
 
-    private Double totalPrice;
-
     private Instant createdAt;
 
-    public Basket(@NonNull String description, Double totalPrice) {
+    private UUID ownerId;
+
+    public Basket(@NonNull String description, @NonNull UUID ownerId) {
         this.description = description;
-        this.totalPrice = validateTotalPrice(totalPrice);
+        this.ownerId = ownerId;
         this.createdAt = Instant.now();
     }
 
-    private double validateTotalPrice(Double totalPrice) {
-        Double fixedTotalPrice = 0.0;
-        if (totalPrice != null && totalPrice >= 0) {
-            fixedTotalPrice = totalPrice;
-        }
-        return fixedTotalPrice;
-    }
 
 }

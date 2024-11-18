@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -13,6 +15,5 @@ public class BasketCreateRequest {
 
     private String description;
 
-    private Double totalPrice;
-
+    private List<String> emailsInvited;
 }

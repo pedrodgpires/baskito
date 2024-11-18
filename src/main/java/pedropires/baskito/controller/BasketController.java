@@ -40,7 +40,7 @@ public class BasketController {
 
     @PostMapping("/create")
     public ResponseEntity<BasketDto> createBasket(@RequestBody BasketCreateRequest basketCreateRequest) {
-        BasketDto basket = basketService.createBasket(basketCreateRequest.getDescription(), basketCreateRequest.getTotalPrice());
+        BasketDto basket = basketService.createBasket(basketCreateRequest.getDescription(), basketCreateRequest.getEmailsInvited());
         if (basket == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
