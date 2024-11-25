@@ -26,21 +26,27 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@RequestBody UserRegistrationRequestDto userRegistrationRequestDto) {
-        boolean registered = userService.register(userRegistrationRequestDto.getName(),
-                userRegistrationRequestDto.getEmail(), userRegistrationRequestDto.getPassword());
-        if (!registered) {
+        try {
+            boolean registered = userService.register(userRegistrationRequestDto.getName(),
+                    userRegistrationRequestDto.getEmail(), userRegistrationRequestDto.getPassword());
+            if (registered) {
+                return new ResponseEntity<>(HttpStatus.CREATED);
+            } else {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+        } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> login(@RequestBody UserLoginRequestDto userLoginRequestDto) {
-        UserDto userLoginResponseDto = userService.login(
-                userLoginRequestDto.getEmail(), userLoginRequestDto.getPassword());
-        if (userLoginResponseDto == null) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<UserDto> login (@RequestBody UserLoginRequestDto userLoginRequestDto){
+        try {
+            UserDto userDto = userService.login(userLoginRequestDto.getEmail(), userLoginRequestDto.getPassword());
+            return new ResponseEntity<>(userDto, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(userLoginResponseDto, HttpStatus.OK);
-        }
+
+    }
 }
