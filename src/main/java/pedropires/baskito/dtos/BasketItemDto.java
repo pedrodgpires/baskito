@@ -11,8 +11,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BasketItemDto {
 
-    BasketDto basket;
-    
     List<ItemDto> items;
 
 

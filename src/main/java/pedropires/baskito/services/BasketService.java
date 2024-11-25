@@ -1,28 +1,29 @@
 package pedropires.baskito.services;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import pedropires.baskito.controller.BasketController;
 import pedropires.baskito.domain.Basket;
 import pedropires.baskito.domain.BasketUser;
 import pedropires.baskito.domain.Item;
 import pedropires.baskito.domain.User;
 import pedropires.baskito.dtos.BasketDto;
-import pedropires.baskito.dtos.BasketItemDto;
 import pedropires.baskito.dtos.ItemDto;
 import pedropires.baskito.repositories.IBasketRepository;
 import pedropires.baskito.repositories.IBasketUserRepository;
 import pedropires.baskito.repositories.IItemRepository;
 import pedropires.baskito.repositories.IUserRepository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
-@AllArgsConstructor
 public class BasketService {
 
     @Autowired
@@ -34,111 +35,129 @@ public class BasketService {
     @Autowired
     IBasketUserRepository basketUserRepository;
 
-
     public BasketDto getBasket(UUID basketId) {
-        UUID userId = UUID.randomUUID(); // FUTURE
-        Optional<Basket> oBasket = basketRepository.findById(basketId);
-        if (oBasket.isEmpty()) {
-            return null;
-        }
-        // Check if user is part of the basket
-        BasketUser basketUser = basketUserRepository.findByBasketIdAndUserId(basketId, userId);
-        if (basketUser == null) {
-            return null;
-        }
+        Basket oBasket = isBasketPresent(basketId);
+        UUID userId = isUserAllowedToAccessBasket(basketId);
+
         // Get all the invited users
-        List<String> owners = new ArrayList<>();
+        Map<String, String> owners = new HashMap<>();
         List<BasketUser> invitedUsers = basketUserRepository.findInvitedEmailsByBasketId(basketId);
         if (!invitedUsers.isEmpty()) {
             for (BasketUser invitedUser : invitedUsers) {
-                UUID otherOwnerId = invitedUser.getBasketUserId();
+                UUID otherOwnerId = invitedUser.getBasketId();
                 Optional<User> oUser = userRepository.findById(otherOwnerId);
-                oUser.ifPresent(user -> owners.add(user.getEmail()));
+                oUser.ifPresent(user -> owners.put(user.getName(), user.getEmail()));
             }
         }
         // Get all the items in the basket
-        // FUTURE
-        UUID id = oBasket.get().getBasketId();
-        String description = oBasket.get().getDescription();
-
-        return new BasketDto(id, description, owners);
-    }
-
-    public BasketItemDto getBasketItems(UUID basketId) {
-        BasketDto basket = getBasket(basketId);
-        if (basket == null) {
-            return null;
-        }
-        List<Item> itemsResponse = itemRepository.findByBasketId(basketId);
+        List<Item> items = getBasketItems(basketId);
         List<ItemDto> itemDtos = new ArrayList<>();
-        for (Item item : itemsResponse) {
-            itemDtos.add(new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.getQuantity(), item.isChecked()));
+        for (Item item : items) {
+            itemDtos.add(new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.isChecked()));
         }
-        return new BasketItemDto(basket, itemDtos);
+
+        BasketDto basketDto = new BasketDto();
+        basketDto.setBasketId(basketId);
+        basketDto.setDescription(oBasket.getDescription());
+        basketDto.setOwners(owners);
+        basketDto.setItems(itemDtos);
+        return basketDto;
     }
 
     public BasketDto createBasket(String description, List<String> emailsInvited) {
-        //Check is emaisl are valid
-        List<String> validEmails = new ArrayList<>();
-        if (emailsInvited != null && !emailsInvited.isEmpty()) {
-            for (String email : emailsInvited) {
-                if (userRepository.findByEmail(email).isPresent()) {
-                    validEmails.add(email);
-                }
-            }
-        }
-        // Get Id from the user that is creating the basket - FUTURE
-        UUID ownerId = UUID.randomUUID();
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID userId = userRepository.findByEmail(userEmail).get().getUserId();
         // Create basket
-        Basket basket = new Basket(description, ownerId);
+        Basket basket = new Basket(description, userId);
         Basket savedBasket = basketRepository.save(basket);
-        // Add users to basket
-        if (!validEmails.isEmpty()) {
-            UUID basketId = savedBasket.getBasketId();
-            for (String email : validEmails) {
-                //Send email to {email} with invitation to join basket {description} FUTURE WORK
-                UUID userId = userRepository.findByEmail(email).get().getUserId();
-                BasketUser bastUser = new BasketUser(userId, basketId);
-                basketUserRepository.save(bastUser);
+        BasketUser basketUser = new BasketUser(savedBasket.getBasketId(), userId);
+        basketUserRepository.save(basketUser);
+        Map<String, String> invitedEmails = new HashMap<>();
+        // Invite users
+        for (String email : emailsInvited) {
+            Optional<User> oUser = userRepository.findByEmail(email);
+            if (oUser.isPresent()) {
+                BasketUser invitedUser = new BasketUser();
+                invitedUser.setBasketId(savedBasket.getBasketId());
+                invitedUser.setUserId(oUser.get().getUserId());
+                basketUserRepository.save(invitedUser);
+                invitedEmails.put(oUser.get().getName(), oUser.get().getEmail());
             }
+            // If the user doesn't exist, we don't do anything
         }
-        return new BasketDto(basket.getBasketId(), basket.getDescription(), validEmails);
+        BasketDto basketDto = new BasketDto();
+        basketDto.setBasketId(savedBasket.getBasketId());
+        basketDto.setDescription(savedBasket.getDescription());
+        basketDto.setOwners(invitedEmails);
+        return basketDto;
     }
 
-    public ItemDto addItemToCart(String description, int quantity, UUID basketId) {
-        Optional<Basket> oBasket = basketRepository.findById(basketId);
-        if (oBasket.isEmpty()) {
-            return null;
-        }
-        Item item = new Item(basketId, description, quantity);
+    public ItemDto addItemToBasket(String description, UUID basketId) {
+        Basket oBasket = isBasketPresent(basketId);
+        UUID userId = isUserAllowedToAccessBasket(basketId);
+
+        Item item = new Item();
+        item.setBasketId(basketId);
+        item.setDescription(description);
         itemRepository.save(item);
 
-        return new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.getQuantity(), item.isChecked());
+        return new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.isChecked());
     }
 
-    public boolean removeItemFromCart(UUID basketId, UUID itemId) {
+    public boolean removeItemFromBasket(UUID basketId, UUID itemId) {
+        Basket oBasket = isBasketPresent(basketId);
+        UUID userId = isUserAllowedToAccessBasket(basketId);
+
         Optional<Item> oItem = itemRepository.findById(itemId);
         if (oItem.isEmpty() || !oItem.get().getBasketId().equals(basketId)) {
-            return false;
+            throw new IllegalArgumentException("Item cannot be removed");
         }
         itemRepository.deleteById(itemId);
-
         return true;
     }
 
-    public ItemDto checkItem(UUID basketId, UUID itemId) {
+    public ItemDto editItem(UUID basketId, UUID itemId, ItemDto itemDto) {
+        Basket oBasket = isBasketPresent(basketId);
+        UUID userId = isUserAllowedToAccessBasket(basketId);
         Optional<Item> oItem = itemRepository.findById(itemId);
         if (oItem.isEmpty() || !oItem.get().getBasketId().equals(basketId)) {
-            return null;
+            throw new IllegalArgumentException("Item cannot be checked");
         }
         Item item = oItem.get();
-        item.setChecked(true);
-        itemRepository.save(item);
-
-        return new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.getQuantity(), item.isChecked());
+        boolean isUpdated = item.update(itemDto);
+        if (!isUpdated) {
+            throw new IllegalArgumentException("Item was not updated");
+        }
+        Item updatedItem = itemRepository.save(item);
+        return new ItemDto(updatedItem.getItemId(), updatedItem.getBasketId(), updatedItem.getDescription(), updatedItem.isChecked());
     }
 
+    private List<Item> getBasketItems(UUID basketId) {
+        List<Item> itemsResponse = itemRepository.findByBasketId(basketId);
+        List<ItemDto> itemDtos = new ArrayList<>();
+        for (Item item : itemsResponse) {
+            itemDtos.add(new ItemDto(item.getItemId(), item.getBasketId(), item.getDescription(), item.isChecked()));
+        }
+        return itemsResponse;
+    }
 
+    private UUID isUserAllowedToAccessBasket(UUID basketId) {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID userId = userRepository.findByEmail(userEmail).get().getUserId();
+        Optional<BasketUser> basketUser = basketUserRepository.findByBasketIdAndUserId(basketId, userId);
+        if (basketUser.isEmpty()) {
+            throw new IllegalArgumentException("User don't have access to this list");
+        }
+        return userId;
+    }
+
+    private Basket isBasketPresent(UUID basketId) {
+        Optional<Basket> oBasket = basketRepository.findById(basketId);
+        if (oBasket.isEmpty()) {
+            throw new IllegalArgumentException("List not found");
+        }
+        return oBasket.get();
+    }
 
 
 }

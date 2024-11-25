@@ -6,8 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class BaskitoApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(BaskitoApplication.class, args);
-	}
+    public static void main(String[] args) {
+
+        SpringApplication.run(BaskitoApplication.class, args);
+    }
 
 }

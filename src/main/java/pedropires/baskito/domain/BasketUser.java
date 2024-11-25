@@ -25,19 +25,12 @@ public class BasketUser {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID basketUserId;
 
     private UUID basketId;
 
     private UUID userId;
-
-    @PrePersist
-    public void prePersist() {
-        if (basketUserId == null) {
-            this.basketUserId = userId.toString() + "-" + basketId.toString();
-        }
-    }
 
 
 

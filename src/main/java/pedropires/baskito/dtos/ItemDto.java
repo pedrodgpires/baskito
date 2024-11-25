@@ -18,8 +18,6 @@ public class ItemDto {
 
     String description;
 
-    int quantity;
-
     boolean checked;
 
 }
