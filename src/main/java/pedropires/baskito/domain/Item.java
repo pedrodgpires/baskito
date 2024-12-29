@@ -1,7 +1,5 @@
 package pedropires.baskito.domain;
 
-import java.util.UUID;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
-import pedropires.baskito.dtos.ItemDto;
 
 
 @NoArgsConstructor
@@ -20,29 +17,29 @@ import pedropires.baskito.dtos.ItemDto;
 public class Item {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID itemId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String itemId;
 
-    private UUID basketId;
+    private String basketId;
 
     private String description;
 
-    private boolean checked;
+    private Boolean checked;
 
-    public Item(@NonNull UUID basketId, @NonNull String description) {
+    public Item(@NonNull String basketId, @NonNull String description) {
         this.basketId = basketId;
         this.description = description;
         this.checked = false;
     }
 
-    public boolean update (ItemDto itemDto) {
+    public boolean update (String description, Boolean checked) {
         boolean updated = false;
-        if (itemDto.getDescription() != null && !itemDto.getDescription().equals(this.description)) {
-            this.description = itemDto.getDescription();
+        if (description != null && !description.equals(this.description)) {
+            this.description = description;
             updated = true;
         }
-        if (itemDto.isChecked() != this.checked) {
-            this.checked = itemDto.isChecked();
+        if (checked != null && !checked.equals(this.checked)) {
+            this.checked = checked;
             updated = true;
         }
         return updated;

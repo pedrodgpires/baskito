@@ -1,8 +1,5 @@
 package pedropires.baskito.domain;
 
-import java.time.Instant;
-import java.util.UUID;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Entity
 @Getter
 @Setter
@@ -20,16 +19,16 @@ public class Basket {
 
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID basketId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String basketId;
 
     private String description;
 
     private Instant createdAt;
 
-    private UUID ownerId;
+    private String ownerId;
 
-    public Basket(@NonNull String description, @NonNull UUID ownerId) {
+    public Basket(@NonNull String description, @NonNull String ownerId) {
         this.description = description;
         this.ownerId = ownerId;
         this.createdAt = Instant.now();

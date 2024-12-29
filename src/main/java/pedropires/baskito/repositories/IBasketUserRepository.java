@@ -6,16 +6,13 @@ import pedropires.baskito.domain.BasketUser;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface IBasketUserRepository extends JpaRepository<BasketUser, UUID> {
+public interface IBasketUserRepository extends JpaRepository<BasketUser, String> {
 
-    BasketUser findByBasketId(UUID basketId);
-    BasketUser findByUserId(UUID userId);
-    Optional<BasketUser> findByBasketIdAndUserId(UUID basketId, UUID userId);
-    List<BasketUser> findInvitedEmailsByBasketId(UUID basketId);
-
+    List<BasketUser> findByUserId(String userId);
+    Optional<BasketUser> findByBasketIdAndUserId(String basketId, String userId);
+    List<BasketUser> findByBasketId(String basketId);
 
 
 }

@@ -5,10 +5,9 @@ import org.springframework.stereotype.Repository;
 import pedropires.baskito.domain.User;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface IUserRepository extends JpaRepository<User, UUID> {
+public interface IUserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByEmail(String email);
 }

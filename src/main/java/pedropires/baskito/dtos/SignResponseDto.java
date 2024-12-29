@@ -9,9 +9,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ItemCreateRequest {
+public class SignResponseDto {
 
-    private String description;
+    private String name;
+    private String token;
 
-    private int quantity;
+
 }

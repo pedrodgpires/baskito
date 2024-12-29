@@ -1,8 +1,6 @@
 package pedropires.baskito.dtos;
 
 
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,12 +10,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ItemDto {
 
-    UUID itemId;
+    String itemId;
 
-    UUID basketId;
+    String basketId;
 
     String description;
 
-    boolean checked;
+    Boolean checked;
 
 }
